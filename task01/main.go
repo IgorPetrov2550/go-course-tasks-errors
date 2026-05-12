@@ -52,9 +52,46 @@ import (
 
 // TODO: объяви три sentinel error
 
+var ErrNotFound = errors.New("not found")
+var ErrForbidden = errors.New("forbidden")
+var ErrBadRequest = errors.New("bad request")
+
 // TODO: напиши функцию getOrder(userID, orderID int) error
 
+func getOrder(userID, orderID int) error {
+	if userID == 0 {
+		return fmt.Errorf("getOrder: %w", ErrBadRequest)
+	}
+	if userID == 99 {
+		return fmt.Errorf("getOrder: %w", ErrForbidden)
+	}
+	if orderID == 0 {
+		return fmt.Errorf("getOrder: %w", ErrNotFound)
+	}
+	return nil
+}
+
 // TODO: напиши функцию handleOrder(userID, orderID int)
+
+func handleOrder(userID, orderID int) {
+	err := getOrder(userID, orderID)
+	if err != nil {
+		wrappedErr := fmt.Errorf("handleOrder: %w", err)
+		switch {
+		case errors.Is(wrappedErr, ErrBadRequest):
+			fmt.Println("400: неверный запрос")
+		case errors.Is(wrappedErr, ErrForbidden):
+			fmt.Println("403: нет доступа")
+		case errors.Is(wrappedErr, ErrNotFound):
+			fmt.Println("404: заказ не найден")
+		default:
+			fmt.Println("500: внутренняя ошибка")
+		}
+	} else {
+		fmt.Println("200: заказ получен")
+		return
+	}
+}
 
 func main() {
 	// TODO: вызови handleOrder(1, 42)  → успех
@@ -62,6 +99,8 @@ func main() {
 	// TODO: вызови handleOrder(99, 42) → forbidden
 	// TODO: вызови handleOrder(1, 0)   → not found
 
-	_ = fmt.Println
-	_ = errors.Is
+	handleOrder(1, 42)
+	handleOrder(0, 42)
+	handleOrder(99, 42)
+	handleOrder(1, 0)
 }
