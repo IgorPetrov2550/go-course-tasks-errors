@@ -67,6 +67,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	// TODO: добавь "encoding/json" когда будешь реализовывать writeJSON
@@ -74,7 +75,18 @@ import (
 
 // TODO: напиши writeJSON(w http.ResponseWriter, status int, body any)
 
+func writeJSON(w http.ResponseWriter, status int, body any) {
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(body)
+}
+
 // TODO: напиши writeError(w http.ResponseWriter, status int, message string)
+
+func writeError(w http.ResponseWriter, status int, message string) {
+	writeJSON(w, status, map[string]string{"error": message})
+}
 
 func main() {
 	mux := http.NewServeMux()
@@ -82,8 +94,38 @@ func main() {
 	// TODO: зарегистрируй GET /v1/plain/{id}
 	// TODO: зарегистрируй GET /v1/json/{id}
 
+	// GET /v1/plain/{id}
+	//   - если id == "0" → http.Error(w, "not found", 404)
+	//   - иначе → http.Error(w, "user: "+id, 200)
+	//     (Подсказка: http.Error всегда text/plain)
+	mux.HandleFunc("GET /v1/plain/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		if id == "0" {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+
+		http.Error(w, "user: "+id, http.StatusOK)
+	})
+	// GET /v1/json/{id}
+	//   - используй writeJSON(w, status, body) и writeError(w, status, message)
+	//   - если id == "0" → writeError(w, 404, "not found")
+	//   - иначе → writeJSON(w, 200, map[string]string{"name": "user-" + id})
+	mux.HandleFunc("GET /v1/json/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		if id == "0" {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"name": "user-" + id})
+	})
+
 	fmt.Println("сервер запущен: http://localhost:8080")
 	fmt.Println("попробуй: curl -i http://localhost:8080/v1/plain/0")
+	fmt.Println("попробуй: curl -i http://localhost:8080/v1/plain/42")
+	fmt.Println("          curl -i http://localhost:8080/v1/json/0")
 	fmt.Println("          curl -i http://localhost:8080/v1/json/42")
 
 	http.ListenAndServe(":8080", mux)
