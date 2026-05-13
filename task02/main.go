@@ -75,15 +75,71 @@ import (
 // TODO: создай тип ValidationError { Field, Message string }
 // TODO: реализуй метод Error() string - `поле "email": нет символа @`
 
+type ValidationError struct {
+	Field   string
+	Message string
+}
+
+func (v ValidationError) Error() string {
+	return fmt.Sprintf("поле %q: %s", v.Field, v.Message)
+}
+
 // TODO: создай тип NotFoundError { Resource string; ID int }
+
+type NotFoundError struct {
+	Resource string
+	ID       int
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("%s с id=%d не найден", e.Resource, e.ID)
+}
+
 // TODO: реализуй метод Error() string - `user с id=42 не найден`
 
 // TODO: напиши processRequest(action string) error
+func processRequest(action string) error {
+	//   - action == "validate" → вернуть fmt.Errorf("processRequest: %w",
+	//                              ValidationError{Field: "email", Message: "нет символа @"})
+	//   - action == "find"     → вернуть fmt.Errorf("processRequest: %w",
+	//                              &NotFoundError{Resource: "user", ID: 42})
+	//   - иначе                → nil
+	//
+	if action == "validate" {
+		return fmt.Errorf("processRequest: %w", ValidationError{Field: "email", Message: "нет символа @"})
+	}
+	if action == "find" {
+		return fmt.Errorf("processRequest: %w", &NotFoundError{Resource: "user", ID: 42})
+	}
+	return nil
+}
 
 func main() {
 	// TODO: вызови processRequest("validate"), processRequest("find"), processRequest("ok")
+
+	actions := []string{"validate", "find", "ok"}
+	for _, action := range actions {
+		if err := processRequest(action); err != nil {
+			fmt.Printf("ошибка: %v\n", err)
+
+			var vErr ValidationError
+			var nErr *NotFoundError
+			// В main() вызови processRequest три раза и через errors.As разбери каждую ошибку:
+			//   processRequest("validate"):
+			//     → поле "email": нет символа @  (достать ValidationError, вывести Field и Message)
+			//   processRequest("find"):
+			//     → user с id=42 не найден  (достать *NotFoundError, вывести Resource и ID)
+			//   processRequest("ok"):
+			//     → успех
+			if errors.As(err, &vErr) {
+				fmt.Printf("это ValidationError - поле: %s, причина: %s\n\n", vErr.Field, vErr.Message)
+			} else if errors.As(err, &nErr) {
+				fmt.Printf("это NotFoundError - ресурс: %s, id: %d\n\n", nErr.Resource, nErr.ID)
+			}
+		} else {
+			fmt.Println("успех")
+		}
+	}
 	// TODO: для каждого случая используй errors.As чтобы разобрать ошибку
 
-	_ = fmt.Println
-	_ = errors.As
 }

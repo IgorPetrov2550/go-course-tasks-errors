@@ -78,27 +78,84 @@ import (
 )
 
 // TODO: создай ValidationError { Field, Message string }
+
+type ValidationError struct {
+	Field   string
+	Message string
+}
+
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("поле %q: %s", e.Field, e.Message)
+}
+
 // TODO: реализуй Error() string
 
 // TODO: напиши validateOrder(name string, amount int, email string) error
 
+func validateOrder(name string, amount int, email string) error {
+	var errs []error
+
+	if name == "" {
+		errs = append(errs, &ValidationError{Field: "name", Message: "не должно быть пустым"})
+	}
+
+	if amount <= 0 {
+		errs = append(errs, &ValidationError{Field: "amount", Message: "должно быть больше 0"})
+	}
+
+	if !strings.Contains(email, "@") {
+		errs = append(errs, &ValidationError{Field: "email", Message: "неверный формат"})
+	}
+	return errors.Join(errs...)
+}
+
 // TODO: напиши printErrors(err error)
+
+func printErrors(err error) {
+	//   - если err == nil → fmt.Println("валидация прошла успешно")
+	//   - иначе выводит каждую отдельную ошибку через errors.As в цикле.
+	//
+	//   Подсказка - как разобрать errors.Join:
+	//     type multiErr interface { Unwrap() []error }
+	//     var me multiErr
+	//     if errors.As(err, &me) {
+	//         for _, e := range me.Unwrap() {
+	//             var vErr *ValidationError
+	//             if errors.As(e, &vErr) {
+	//                 fmt.Printf("  поле %q: %s\n", vErr.Field, vErr.Message)
+	//             }
+	//         }
+	//     }
+	//
+	if err == nil {
+		fmt.Println("валидация прошла успешно")
+		return
+	}
+
+	fmt.Println("ошибки валидации:")
+	type multiErr interface{ Unwrap() []error }
+	var me multiErr
+	if errors.As(err, &me) {
+		for _, e := range me.Unwrap() {
+			var vErr *ValidationError
+			if errors.As(e, &vErr) {
+				fmt.Printf("  поле %q: %s\n", vErr.Field, vErr.Message)
+			}
+		}
+	}
+}
 
 func main() {
 	// TODO: раскомментируй когда реализуешь validateOrder и printErrors
-	//
-	// fmt.Println(`validateOrder("Аня", 5, "anya@mail.ru"):`)
-	// printErrors(validateOrder("Аня", 5, "anya@mail.ru"))
-	//
-	// fmt.Println()
-	// fmt.Println(`validateOrder("", -1, "anya-without-at"):`)
-	// printErrors(validateOrder("", -1, "anya-without-at"))
-	//
-	// fmt.Println()
-	// fmt.Println(`validateOrder("Боря", 0, ""):`)
-	// printErrors(validateOrder("Боря", 0, ""))
+	fmt.Println(`validateOrder("Аня", 5, "anya@mail.ru"):`)
+	printErrors(validateOrder("Аня", 5, "anya@mail.ru"))
 
-	_ = errors.Join
-	_ = strings.Contains
-	_ = fmt.Println
+	fmt.Println()
+	fmt.Println(`validateOrder("", -1, "anya-without-at"):`)
+	printErrors(validateOrder("", -1, "anya-without-at"))
+
+	fmt.Println()
+	fmt.Println(`validateOrder("Боря", 0, ""):`)
+	printErrors(validateOrder("Боря", 0, ""))
+
 }
