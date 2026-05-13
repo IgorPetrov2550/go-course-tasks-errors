@@ -106,13 +106,11 @@ type userService struct {
 }
 
 func (r *userService) GetUser(id int) (*User, error) {
-	//   - вызывает repo.FindByID
-	//   - при ошибке: return nil, fmt.Errorf("service.GetUser id=%d: %w", id, err)
-	if user, err := r.repo.FindByID(id); err != nil {
+	user, err := r.repo.FindByID(id)
+	if err != nil {
 		return nil, fmt.Errorf("service.GetUser id=%d: %w", id, err)
-	} else {
-		return user, nil
 	}
+	return user, nil
 }
 
 // TODO: напиши handleGetUser(id int)

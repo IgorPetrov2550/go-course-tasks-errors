@@ -70,7 +70,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	// TODO: добавь "encoding/json" когда будешь реализовывать writeJSON
 )
 
 // TODO: напиши writeJSON(w http.ResponseWriter, status int, body any)
