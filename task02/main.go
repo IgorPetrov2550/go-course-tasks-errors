@@ -92,7 +92,7 @@ type NotFoundError struct {
 }
 
 func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("%s c id=%d не найден", e.Resource, e.ID)
+	return fmt.Sprintf("%s с id=%d не найден", e.Resource, e.ID)
 }
 
 // TODO: реализуй метод Error() string - `user с id=42 не найден`
